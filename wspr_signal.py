@@ -16,13 +16,23 @@ import genwsprcode as gw
 # References
 #  https://swharden.com/software/FSKview/wspr/
 #  https://en.m.wikipedia.org/wiki/WSPR_(amateur_radio_software)
+#  http://www.g4jnt.com/Coding/WSPR_Coding_Process.pdf
+
+""" testing
+python wspr_signal.py
+sox wspr.wav -n stats spectrogram
+open spectrogram.png
+open wspr.wav
+play wspr.wav   # play is part of sox
+
+"""
 
 CALLSIGN = "AK6IM"
 GRID = "CM87"  # San Mateo County
 POWER = "10"  # dBm
 
 
-WSPR_SAMPLE_RATE = 48000  # Sa/sec
+WSPR_SAMPLE_RATE = 8000  # Sa/sec
 WSPR_BASE_FREQUENCY = 1500  # hz
 WSPR_KEYING_RATE = 12000 / 8192  # symbols/sec
 WSPR_TONE_SEPARATION = WSPR_KEYING_RATE  # Minimum-shift keying
@@ -35,6 +45,17 @@ print(
     f"\n{WSPR_TONE_SEPARATION=}"
     f"\n{WSPR_SYMBOL_DURATION=}"
 )
+
+
+def moyel(x, w=8, dim=0, in_place=False):
+    """tapers the tips"""
+    if not in_place:
+        x = x.copy()
+    win = sig.windows.hann(2 * w, sym=True)
+    x[:w] *= win[:w]
+    x[-w:] *= win[-w:]
+    return x
+
 
 symbols = np.array(gw.Genwsprcode(CALLSIGN, GRID, POWER))
 
@@ -54,14 +75,21 @@ if True:
     phi = np.cumsum(dphi)
     x = 0.5 * np.exp(1j * phi)
 else:
-    # simple way for debugging 
-    #   don't use, phase discontinuities create a subharmonc 
+    # simple way for debugging
+    #   don't use, phase discontinuities create a subharmonc
     f = np.tile(symbol_frequencies, (samples_per_symbol, 1)).T.ravel()
     t = np.arange(len(f)) / WSPR_SAMPLE_RATE
     x = 0.5 * np.exp(2j * np.pi * f * t)
 
 if True:
-    
+    # pad to 120 sec, so we can loop it
+    x = moyel(x, w=int(WSPR_SAMPLE_RATE / 10), in_place=True)
+    x = np.pad(
+        x,
+        (WSPR_SAMPLE_RATE, 119 * WSPR_SAMPLE_RATE - len(x)),
+        mode="constant",
+        constant_values=0j,
+    )
 
 if False:
     plt.plot(symbols)
