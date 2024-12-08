@@ -6,13 +6,16 @@
 # wsprgen.py CALLSIGN GRID dBPower BASE_AUDIO_FREQUENCY
 
 # genwsprcode from https://github.com/PH0TRA/wspr/blob/master/genwsprcode.py
-import genwsprcode as g
-import pyaudio
-import numpy as np
-import time
+
 import sys
+import time
 from optparse import OptionParser
 from random import randrange
+
+import numpy as np
+import pyaudio
+
+import genwsprcode as g
 
 
 def main():

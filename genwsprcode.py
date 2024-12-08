@@ -171,9 +171,10 @@ class Genwsprcode:
         for x in range(162):
             imessage[ridx[x]] = message[x]  ## python 2.7
 
-        t = ["%d," % (2 * x + y) for x, y in zip(imessage, syncv)]
+        # t = ["%d," % (2 * x + y) for x, y in zip(imessage, syncv)]
+        # symbols = "".join(t)
 
-        symbols = "".join(t)
+        symbols = [(2 * x + y) for x, y in zip(imessage, syncv)]
 
         return symbols
 
