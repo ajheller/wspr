@@ -4,11 +4,13 @@
 Code to generate WSPR signal file
 """
 
+# import argparse
 import fractions
+
 import numpy as np
 import scipy.signal as sig
-from scipy.io import wavfile as wav
 from matplotlib import pyplot as plt
+from scipy.io import wavfile as wav
 
 import genwsprcode as gw
 
@@ -19,15 +21,18 @@ import genwsprcode as gw
 #  https://en.m.wikipedia.org/wiki/WSPR_(amateur_radio_software)
 #  http://www.g4jnt.com/Coding/WSPR_Coding_Process.pdf
 
+# pylint: disable=pointless-string-statement
 """ testing
-python wspr_signal.py
+python3 wspr_signal.py
 sox wspr.wav -n stats spectrogram
 open spectrogram.png
 open wspr.wav
 play wspr.wav   # play is part of sox
 
 """
+DEBUG = False
 
+# defaults
 CALLSIGN = "AK6IM"
 GRID = "CM87"  # Marin to Santa Cruz  CM87um44fg
 POWER = "10"  # dBm
@@ -36,6 +41,17 @@ WSPR_SAMPLE_RATE = 12000  # Sa/sec
 
 PAD_TO_120SEC = True
 WAVFILE_PATH = "wspr.wav"
+
+# TODO: add command line parsing
+# parser = argparse.ArgumentParser("wspr_signal")
+# parser.add_argument("callsign", default=CALLSIGN)
+# parser.add_argument("grid", default=GRID)
+# parser.add_argument("power", default=POWER)
+# parser.add_argument("-o", "--output-path", default=WAVFILE_PATH)
+# parser.add_argument("-s", "--sample-rate", default=WSPR_SAMPLE_RATE)
+# parser.add_argument("-p", "--pad", action="store_true")
+# args = parser.parse_args()
+
 
 # no user parameters below here
 WSPR_BASE_FREQUENCY = 1500  # hz
@@ -79,48 +95,43 @@ if (
     pass
 else:
     raise ValueError(
-        f"WSPR_SAMPLE_RATE must be a multiple of 375 and greater than {float(2 * max(symbol_frequencies))}"
+        "WSPR_SAMPLE_RATE must be a multiple of 375 and greater than "
+        f"{float(2 * max(symbol_frequencies))}"
     )
 
-if True:
-    # wspr is continus phase fsk
-    radians_per_sample = (2 * np.pi * symbol_frequencies / WSPR_SAMPLE_RATE).astype(
-        np.float64
-    )
-    dphi = np.tile(radians_per_sample, (SAMPLES_PER_SYMBOL, 1)).T.ravel()
-    phi = np.cumsum(dphi)
-    x = np.exp(1j * phi)
-else:
-    # simple way for debugging
-    #   don't use, phase discontinuities create a subharmonc
-    f = np.tile(symbol_frequencies, (SAMPLES_PER_SYMBOL, 1)).T.ravel()
-    t = np.arange(len(f)) / WSPR_SAMPLE_RATE
-    x = 0.5 * np.exp(2j * np.pi * f * t)
+
+# wspr is continus phase fsk
+radians_per_sample = (2 * np.pi * symbol_frequencies / WSPR_SAMPLE_RATE).astype(
+    np.float64
+)
+phi_dot = np.tile(radians_per_sample, (SAMPLES_PER_SYMBOL, 1)).T.ravel()
+phi = np.cumsum(phi_dot)
+sig = np.exp(1j * phi)
 
 if PAD_TO_120SEC:
     # pad to 120 sec, so we can loop it
-    x = moyel(x, w=int(WSPR_SAMPLE_RATE / 10), in_place=True)
-    x = np.pad(
-        x,
-        (WSPR_SAMPLE_RATE, 119 * WSPR_SAMPLE_RATE - len(x)),
+    sig = moyel(sig, w=int(WSPR_SAMPLE_RATE / 10), in_place=True)
+    sig = np.pad(
+        sig,
+        (WSPR_SAMPLE_RATE, 119 * WSPR_SAMPLE_RATE - len(sig)),
         mode="constant",
         constant_values=0j,
     )
 
-if False:
+if DEBUG:
     plt.plot(symbols)
     plt.show()
     plt.plot(symbol_frequencies)
     plt.show()
     plt.plot(radians_per_sample)
     plt.show()
-    plt.plot(dphi)
+    plt.plot(phi_dot)
     plt.show()
     plt.plot(phi)
     plt.show()
 
 
-xx = x.view(np.float64).reshape(-1, 2)
+xx = sig.view(np.float64).reshape(-1, 2)
 wav.write(WAVFILE_PATH, WSPR_SAMPLE_RATE, xx.astype(np.float32))
 
 print(f"Wrote {WAVFILE_PATH}, {len(xx)} samples, {len(xx)/WSPR_SAMPLE_RATE} sec")
