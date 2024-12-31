@@ -8,7 +8,7 @@ Code to generate WSPR signal file
 import fractions
 
 import numpy as np
-import scipy.signal as sig
+import scipy.signal as signal
 from matplotlib import pyplot as plt
 from scipy.io import wavfile as wav
 
@@ -78,7 +78,7 @@ def moyel(x, w=8, dim=0, in_place=False):
     """tapers the tips"""
     if not in_place:
         x = x.copy()
-    win = sig.windows.hann(2 * w, sym=True)
+    win = signal.windows.hann(2 * w, sym=True)
     x[:w] *= win[:w]
     x[-w:] *= win[-w:]
     return x
