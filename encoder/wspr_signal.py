@@ -39,8 +39,9 @@ POWER = "10"  # dBm
 
 WSPR_SAMPLE_RATE = 12000  # Sa/sec
 
-PAD_TO_120SEC = True
-WAVFILE_PATH = "wspr.wav"
+PAD_TO_SECS = 120  # these allow file to be looped
+PAD_START_SECS = 1
+WAVFILE_PATH = "wspr-iq.wav"
 
 # TODO: add command line parsing
 # parser = argparse.ArgumentParser("wspr_signal")
@@ -108,14 +109,17 @@ phi_dot = np.tile(radians_per_sample, (SAMPLES_PER_SYMBOL, 1)).T.ravel()
 phi = np.cumsum(phi_dot)
 sig = np.exp(1j * phi)
 
-if PAD_TO_120SEC:
-    # pad to 120 sec, so we can loop it
+if PAD_TO_SECS:
+    # window start and end of signal with half-raised cosine
     sig = moyel(sig, w=int(WSPR_SAMPLE_RATE / 10), in_place=True)
     sig = np.pad(
         sig,
-        (WSPR_SAMPLE_RATE, 119 * WSPR_SAMPLE_RATE - len(sig)),
+        (
+            WSPR_SAMPLE_RATE * PAD_START_SECS,  # pad at beginning
+            WSPR_SAMPLE_RATE * (PAD_TO_SECS - PAD_START_SECS) - len(sig),  # pad at end
+        ),
         mode="constant",
-        constant_values=0j,
+        constant_values=0 + 0j,  # pad with 0+0j
     )
 
 if DEBUG:
@@ -132,6 +136,21 @@ if DEBUG:
 
 
 xx = sig.view(np.float64).reshape(-1, 2)
+
+# for gnu radio
 wav.write(WAVFILE_PATH, WSPR_SAMPLE_RATE, xx.astype(np.float32))
+
+# for wsprd testing
+scaling = 0.5  # -6 dB SNR
+# scaling = 1 / 100 * np.iinfo(np.int16).max
+dither = np.random.normal(0, 1, sig.shape)
+wav.write(
+    "wspr-i.wav",
+    WSPR_SAMPLE_RATE,
+    np.round(scaling * sig + dither).real.astype(np.int16),
+)
+
+# TODO: for hackrf_transfer -- raw signed 8-bit complex interleaved
+
 
 print(f"Wrote {WAVFILE_PATH}, {len(xx)} samples, {len(xx)/WSPR_SAMPLE_RATE} sec")
