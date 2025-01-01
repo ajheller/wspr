@@ -1,4 +1,33 @@
-### notes on the wspr decoder
+# notes on the wspr decoder
+
+
+This code is from
+  https://github.com/WSPRpi/WSPR-Decoder
+which is a fork of
+  https://github.com/k9an/old_wsprcan
+
+New development is in wspr-x under:
+  https://sourceforge.net/projects/wsjt/
+
+### typical output
+  250101 0024   9  -6 -1.0 10.0015022  AK6IM CM87 10           0     1    0
+
+       * date
+       * UTC
+       * sync ?
+       * SNR
+       * time offset
+       * frequency [MHz]
+       * callsign
+       * grid
+       * tx power dBm
+       * drift [Hz?]
+       * cycles ?
+       * ii ?
+
+
+
+### Format of wav file expected by wsprd
 
 Assumes wav file is 12000 Sa/sec, mono, 16-bit ints
 
