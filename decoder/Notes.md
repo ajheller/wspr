@@ -9,28 +9,32 @@ New development is in wspr-x under:
   <https://sourceforge.net/projects/wsjt/>
   The WSPR decoder in the above repo is in FORTRAN
 
-## typical output
+## Typical output
 
-  250101 0024   9  -6 -1.0 10.0015022  AK6IM CM87 10           0     1    0
+````text
+  250101 0024   9  -6 -1.0 10.0015022  AK6IM CM87 10    0    1    0
+````
 
-From reading the code
-       * date
-       * UTC
-       * sync ?
-       * SNR
-       * time offset
-       * frequency [MHz]
-       * callsign
-       * grid
-       * tx power dBm
-       * drift [Hz?]
-       * cycles ?
-       * ii ?
+From reading the code the fields are
+
+* date
+* UTC
+* sync ?
+* SNR
+* time offset
+* frequency [MHz]
+* callsign
+* grid
+* tx power dBm
+* drift [Hz?]
+* cycles ?
+* ii ?
 
 ## Format of wav file expected by wsprd
 
-Assumes wav file is 12000 Sa/sec, mono, 16-bit ints
+Assumes wav file is 12000 Sa/sec, 1 channel, 16-bit ints
 
+````c
   unsigned long npoints = 114 *12000;
   short int*buf2;
   buf2 = malloc(npoints * sizeof(short int));
@@ -41,11 +45,13 @@ Assumes wav file is 12000 Sa/sec, mono, 16-bit ints
   size_t fread(void ptr[restrict .size *.nmemb],
                     size_t size, size_t nmemb,
                     FILE*restrict stream);
+````
 
   The function fread() reads nmemb items of data, each size bytes
        long, from the stream pointed to by stream, storing them at the
        location given by ptr.
 
+````sh
 sox wspr.wav -r 12000 -c1 -b16 w.wav remix -m 1v0.1
 ./k9an-wsprd -H -f 28.1246 ~/dev/wspr/w.wav
 
@@ -62,3 +68,4 @@ Options:
        -v verbose mode
        -w wideband mode - decode signals within +/- 150 Hz of center
 (base) heller@Aarons-MacBook-Air WSPR-Decoder %
+````
