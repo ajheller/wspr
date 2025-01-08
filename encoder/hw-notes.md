@@ -1,6 +1,6 @@
 # QPR transmitter notes
 
-## Cheap RF amps from Amazon
+## Cheap RF amps from Amazon and Ebay
 
 1. <https://www.amazon.com/dp/B0CFLB7QLF>  -- "9-12V Radio Frequency Wideband Amplifier Low Noise Amplifier LNA 0.1-2000MHz Gain 32dB"
     * 32 dB gain,
